@@ -12,7 +12,6 @@ namespace Fredis
     // http://tostring.it/2015/04/23/An-easy-way-to-use-StackExchange-Redis-copy/
     // https://redis.io/commands/type/
 
-
     public class FredisItem
     {
         public string Key { get; set; }
@@ -42,7 +41,7 @@ namespace Fredis
     {
         internal  ConnectionMultiplexer         _redisConnection;
         private ConfigurationOptions            _connectionOptions;
-        public List<FredisReceivedMessage>            _receivedMessages = new List<FredisReceivedMessage>();
+        public List<FredisReceivedMessage>      _receivedMessages = new List<FredisReceivedMessage>();
         public Dictionary<string, DateTime>     _subscribedChannels = new Dictionary<string, DateTime>();
 
         public string ConnectionSummaryString;
@@ -104,19 +103,17 @@ namespace Fredis
             public bool Error;
         }
 
-        public string DeleteKey(string key)
+        public bool DeleteKey(string key)
         {
             try
             {
-                if(Database.KeyDelete(key))
-                    return $"key:{key} deleted";
-                else 
-                    return $"key:{key} deletion failed: Unknown";
+                if (Database.KeyDelete(key))
+                    return true;
             }
             catch (Exception ex)
             {
-                return $"key:{key} deletion failed:{ex.Message}";
             }
+            return false;
         }
 
 
