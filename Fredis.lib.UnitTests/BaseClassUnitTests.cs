@@ -1,6 +1,6 @@
 ﻿namespace Fredis.lib.UnitTests
 {
-    public class FredisBaseClassUnitTests : IDisposable
+    public class BaseClassUnitTests : IDisposable
     {
         public string url => Environment.GetEnvironmentVariable("fredis_url");
         public string password = Environment.GetEnvironmentVariable("fredis_password");
@@ -9,7 +9,7 @@
 
         protected FredisManager _fredisManager = null;
 
-        protected FredisBaseClassUnitTests()
+        protected BaseClassUnitTests()
         {
             _fredisManager = new FredisManager(url, password, ssl, timeOut);
         }

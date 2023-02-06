@@ -1,6 +1,6 @@
 namespace Fredis.lib.UnitTests
 {
-    public class FredisUnitTests : FredisBaseClassUnitTests
+    public class FredisUnitTests : BaseClassUnitTests
     {
         const string key = "ut_Key01";
         public FredisUnitTests() : base()
