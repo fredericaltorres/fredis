@@ -14,7 +14,6 @@
             _fredisManager = new FredisManager(url, password, ssl, timeOut);
         }
 
-
         protected string DeleteKeyAndCheck(string key)
         {
             string result;

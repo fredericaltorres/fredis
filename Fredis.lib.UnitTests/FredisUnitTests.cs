@@ -11,7 +11,6 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_Delete_String_Key()
         {
             var val = "Hello";
-
             base._fredisManager.CreateKey(key, val, 1);
             var result = base._fredisManager.GetValue(key);
             Assert.Equal(val, result);
@@ -25,7 +24,6 @@ namespace Fredis.lib.UnitTests
             base._fredisManager.CreateKey(key, val, 1);
             var result = base._fredisManager.GetValue(key, 0);
             Assert.Equal(val, result);
-
             DeleteKeyAndCheck(key);
         }
 
@@ -36,7 +34,6 @@ namespace Fredis.lib.UnitTests
             base._fredisManager.CreateKey(key, val, 1);
             var result = base._fredisManager.GetValue(key, DateTime.Now);
             Assert.Equal(val, result);
-
             DeleteKeyAndCheck(key);
         }
 
@@ -45,7 +42,6 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_List_Key()
         {
             var val = new List<string>() { "A", "B", "C" };
-
             base._fredisManager.CreateListKey(key, val);
             var result = base._fredisManager.GetListValue(key);
             Assert.Equal(val, result);
