@@ -176,9 +176,20 @@ namespace Fredis
             return l;
         }
 
-        public string GetStringValue(string key)
+        public long GetValue(string key, long defaultValue)
+        {
+            var s = GetValue(key, null as string);
+            if (s == null)
+                return defaultValue;
+            return long.Parse(s);
+        }
+
+        public string GetValue(string key, string defaultValue = null)
         {
             RedisValue rdv = Database.StringGet(key);
+            if (rdv.IsNull)
+                return defaultValue;
+
             return rdv.ToString();
         }
 
@@ -268,7 +279,7 @@ namespace Fredis
             return l;
         }
 
-        public bool CreateStringKey(string key, string val, int ttlInMinutes = 60)
+        public bool CreateKey(string key, string val, int ttlInMinutes = 60)
         {
             var r0 = false;
             this.DeleteKeyIfExits(key);
@@ -280,6 +291,15 @@ namespace Fredis
                 r0 = this.Database.StringSet(key, val, ts);
             return r0;
         }
+
+        // https://github.com/StackExchange/StackExchange.Redis/blob/main/src/StackExchange.Redis/RedisValue.csC
+        // https://stackoverflow.com/questions/32274113/difference-between-storing-integers-and-strings-in-redis
+        public bool CreateKey(string key, System.Int16 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, System.UInt16 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, System.Int64 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, System.UInt64 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, System.Int32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, System.UInt32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
 
         public FredisQueryResult GetReceivedMessage()
         {

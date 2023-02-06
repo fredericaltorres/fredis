@@ -15,6 +15,15 @@
         }
 
 
+        protected string DeleteKeyAndCheck(string key)
+        {
+            string result;
+            _fredisManager.DeleteKey(key);
+            result = _fredisManager.GetValue(key);
+            Assert.Equal(null, result);
+            return result;
+        }
+
         public void Dispose()
         {
             _fredisManager.Close();
