@@ -15,10 +15,12 @@ namespace Fredis
     public class FredisItem
     {
         public string Key { get; set; }
-        public string Value { get; set; }
+        public string TextValue { get; set; }
         public string Type { get; set; }
         public string TTL { get; set; }
         public long Length { get; set; }
+
+        public RedisValue Value { get; set; }
     }
 
     public class FredisReceivedMessage
@@ -39,10 +41,10 @@ namespace Fredis
 
     public class FredisManager
     {
-        internal  ConnectionMultiplexer         _redisConnection;
-        private ConfigurationOptions            _connectionOptions;
-        public List<FredisReceivedMessage>      _receivedMessages = new List<FredisReceivedMessage>();
-        public Dictionary<string, DateTime>     _subscribedChannels = new Dictionary<string, DateTime>();
+        internal ConnectionMultiplexer _redisConnection;
+        private ConfigurationOptions _connectionOptions;
+        public List<FredisReceivedMessage> _receivedMessages = new List<FredisReceivedMessage>();
+        public Dictionary<string, DateTime> _subscribedChannels = new Dictionary<string, DateTime>();
 
         public string ConnectionSummaryString;
         public IDatabase Database;
@@ -83,7 +85,25 @@ namespace Fredis
             return keys;
         }
 
-       
+        public List<FredisItem> GetKeys(string pattern)
+        {
+            var keys = this.GetAllSortedKeys(pattern);
+            var redisItem = new List<FredisItem>();
+            foreach (var key in keys)
+            {
+                var keyType = this.Database.KeyType(key);
+                TimeSpan? ttl = this.Database.KeyTimeToLive(key);
+                var ttlString = "--.--:--:--";
+                if (ttl.HasValue)
+                    ttlString = ttl.Value.ToString(@"dd\.hh\:mm\:ss");
+
+                var valueEx = this.GetValueAsTextEx(key, keyType);
+
+                redisItem.Add(new FredisItem { Key = key, TextValue = valueEx.Text, TTL = ttlString, Type = keyType.ToString(), Length = valueEx.Length });
+            }
+            return redisItem;
+        }
+
         private bool IsInteger(string k)
         {
             int i;
@@ -115,8 +135,6 @@ namespace Fredis
             }
             return false;
         }
-
-
         public Dictionary<string, long> GetSortedSetValue(string key)
         {
             var d = new Dictionary<string, long>();
@@ -125,7 +143,7 @@ namespace Fredis
             foreach (var s in sortedValues)
             {
                 var score = Database.SortedSetScore(key, s);
-                if(score.HasValue)
+                if (score.HasValue)
                     d.Add(s, long.Parse(score.Value.ToString()));
                 else
                     d.Add(s, 0);
@@ -170,51 +188,55 @@ namespace Fredis
             {
                 switch (redisType)
                 {
-                    case RedisType.Hash: {
-                        var hashEntries = Database.HashGetAll(key).ToList();
-                        var sb = new StringBuilder();
-                        foreach (var e in hashEntries)
-                            sb.Append($"{e.Name}: {e.Value}, ");
-                        var t = string.Empty;
-                        if (hashEntries.Count > 0)
-                            t = sb.ToString().Substring(0, sb.Length - 2);
-                        return new RedisValueEx { Text = t, Length = hashEntries.Count };
-                    }
-                    case RedisType.String: {
-                        RedisValue rdv = Database.StringGet(key);
-                        return new RedisValueEx { Text = rdv.ToString(), Length = rdv.Length() };
-                    }
-                    case RedisType.List: {
-                        var count = Database.ListLength(key);
-                        var sb = new StringBuilder();
-                        for(var i=count-1; i>=0; i--)
+                    case RedisType.Hash:
                         {
-                            var item = Database.ListGetByIndex(key, i);
-                            sb.Append($"{item}, ");
+                            var hashEntries = Database.HashGetAll(key).ToList();
+                            var sb = new StringBuilder();
+                            foreach (var e in hashEntries)
+                                sb.Append($"{e.Name}: {e.Value}, ");
+                            var t = string.Empty;
+                            if (hashEntries.Count > 0)
+                                t = sb.ToString().Substring(0, sb.Length - 2);
+                            return new RedisValueEx { Text = t, Length = hashEntries.Count };
                         }
-                        var t = string.Empty;
-                        if(count > 0)
-                            t = sb.ToString().Substring(0, sb.Length - 2);
+                    case RedisType.String:
+                        {
+                            RedisValue rdv = Database.StringGet(key);
+                            return new RedisValueEx { Text = rdv.ToString(), Length = rdv.Length() };
+                        }
+                    case RedisType.List:
+                        {
+                            var count = Database.ListLength(key);
+                            var sb = new StringBuilder();
+                            for (var i = count - 1; i >= 0; i--)
+                            {
+                                var item = Database.ListGetByIndex(key, i);
+                                sb.Append($"{item}, ");
+                            }
+                            var t = string.Empty;
+                            if (count > 0)
+                                t = sb.ToString().Substring(0, sb.Length - 2);
 
-                        return new RedisValueEx { Text = t, Length = count };
-                    }
-                    case RedisType.SortedSet: {
-                        var sb = new StringBuilder();
-                        RedisValue[] sortedValues = Database.SortedSetRangeByRank(key);
-                        long len = 0;
-                        foreach (var s in sortedValues)
-                        {
-                            len += s.Length();
-                            var score = Database.SortedSetScore(key, s);
-                            sb.Append($"{s}: {score}, ");
+                            return new RedisValueEx { Text = t, Length = count };
                         }
-                        var t = string.Empty;
-                        if (sortedValues.Length > 0)
-                            t = sb.ToString().Substring(0, sb.Length - 2);
-                        return new RedisValueEx { Text = t, Length = len };
-                    }
+                    case RedisType.SortedSet:
+                        {
+                            var sb = new StringBuilder();
+                            RedisValue[] sortedValues = Database.SortedSetRangeByRank(key);
+                            long len = 0;
+                            foreach (var s in sortedValues)
+                            {
+                                len += s.Length();
+                                var score = Database.SortedSetScore(key, s);
+                                sb.Append($"{s}: {score}, ");
+                            }
+                            var t = string.Empty;
+                            if (sortedValues.Length > 0)
+                                t = sb.ToString().Substring(0, sb.Length - 2);
+                            return new RedisValueEx { Text = t, Length = len };
+                        }
                 }
-                return new RedisValueEx { Text = $"Unsupported key type:{redisType}, key:{key}", Error = true};
+                return new RedisValueEx { Text = $"Unsupported key type:{redisType}, key:{key}", Error = true };
             }
             catch (Exception ex)
             {
@@ -222,7 +244,42 @@ namespace Fredis
             }
         }
 
-       
+        public bool CreateListKey(string key, List<string> val, int ttlInMinutes = 60)
+        {
+            this.DeleteKeyIfExits(key);
+
+            foreach (var item in val)
+                this.Database.ListLeftPush(key, item);
+
+            var r0 = this.Database.KeyExpire(key, DateTime.Now.AddMinutes(ttlInMinutes));
+
+            return r0;
+        }
+
+        public List<string> GetListKey(string key)
+        {
+            var l = new List<string>();
+            var count = Database.ListLength(key);
+            for (var i = count - 1; i >= 0; i--)
+            {
+                var item = Database.ListGetByIndex(key, i);
+                l.Add(item);
+            }
+            return l;
+        }
+
+        public bool CreateStringKey(string key, string val, int ttlInMinutes = 60)
+        {
+            var r0 = false;
+            this.DeleteKeyIfExits(key);
+
+            var ts = new TimeSpan(0, ttlInMinutes, 0);
+            if (ttlInMinutes == 0)
+                r0 = this.Database.StringSet(key, val);
+            else
+                r0 = this.Database.StringSet(key, val, ts);
+            return r0;
+        }
 
         public FredisQueryResult GetReceivedMessage()
         {
@@ -234,6 +291,14 @@ namespace Fredis
             }
 
             return rr;
+        }
+
+        private void DeleteKeyIfExits(string key)
+        {
+            if (this.Database.KeyExists(key))
+            {
+                this.DeleteKey(key);
+            }
         }
     }
 }
