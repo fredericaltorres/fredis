@@ -2,8 +2,8 @@
 {
     public class FredisBaseClassUnitTests : IDisposable
     {
-        public string url = "bskredisqa.redis.cache.windows.net:6380";
-        public string password = "s1VeHEfu4XjZqHXryfa8C28ZizqVPCoCfNO0fHlTUzE=";
+        public string url => Environment.GetEnvironmentVariable("fredis_url");
+        public string password = Environment.GetEnvironmentVariable("fredis_password");
         public bool ssl = true;
         public int timeOut = 10;
 

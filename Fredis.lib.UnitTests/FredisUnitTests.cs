@@ -2,6 +2,7 @@ namespace Fredis.lib.UnitTests
 {
     public class FredisUnitTests : FredisBaseClassUnitTests
     {
+        const string key = "ut_Key01";
         public FredisUnitTests() : base()
         {
         }
@@ -9,7 +10,6 @@ namespace Fredis.lib.UnitTests
         [Fact]
         public void Create_Get_Delete_String_Key()
         {
-            var key = "ut_Key01";
             var val = "Hello";
 
             base._fredisManager.CreateKey(key, val, 1);
@@ -19,12 +19,22 @@ namespace Fredis.lib.UnitTests
         }
 
         [Fact]
-        public void Create_Get_Delete_Long_Key()
+        public void Create_Get_Delete_Integer_Key()
         {
-            var key = "ut_Key01";
             var val = 123;
             base._fredisManager.CreateKey(key, val, 1);
             var result = base._fredisManager.GetValue(key, 0);
+            Assert.Equal(val, result);
+
+            DeleteKeyAndCheck(key);
+        }
+
+        [Fact]
+        public void Create_Get_Delete_DateTime_Key()
+        {
+            var val = DateTime.Now;
+            base._fredisManager.CreateKey(key, val, 1);
+            var result = base._fredisManager.GetValue(key, DateTime.Now);
             Assert.Equal(val, result);
 
             DeleteKeyAndCheck(key);
@@ -34,7 +44,6 @@ namespace Fredis.lib.UnitTests
         [Fact]
         public void Create_Get_List_Key()
         {
-            var key = "ut_KeyList01";
             var val = new List<string>() { "A", "B", "C" };
 
             base._fredisManager.CreateListKey(key, val);

@@ -176,6 +176,13 @@ namespace Fredis
             return l;
         }
 
+        public DateTime GetValue(string key, DateTime defaultValue)
+        {
+            var s = GetValue(key, null as string);
+            if (s == null)
+                return defaultValue;
+            return Deserialize<DateTime>(s);
+        }
         public long GetValue(string key, long defaultValue)
         {
             var s = GetValue(key, null as string);
@@ -290,6 +297,22 @@ namespace Fredis
             else
                 r0 = this.Database.StringSet(key, val, ts);
             return r0;
+        }
+
+
+        private string Serialize(object o)
+        {
+            return JsonConvert.SerializeObject(o);
+        }
+
+        private T Deserialize<T>(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        public bool CreateKey(string key, DateTime val, int ttlInMinutes = 60) 
+        { 
+            return CreateKey(key, Serialize(val), ttlInMinutes);
         }
 
         // https://github.com/StackExchange/StackExchange.Redis/blob/main/src/StackExchange.Redis/RedisValue.csC
