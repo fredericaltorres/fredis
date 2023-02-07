@@ -58,12 +58,39 @@ namespace Fredis.lib.UnitTests
         }
 
         [Fact]
-        public void Create_Get_List_Key()
+        public void Create_Get_List_Key_String()
         {
-            var val = new List<string>() { "A", "B", "C" };
-            base._fredisManager.CreateListKey(key, val);
+            var list = new List<string>() { "A", "B", "C" };
+            base._fredisManager.CreateListKey<string>(key, list);
             var result = base._fredisManager.GetListValue(key);
-            Assert.Equal(val, result);
+            Assert.Equal(list, result);
+        }
+
+        [Fact]
+        public void Create_Get_List_Key_Int()
+        {
+            var list = new List<int>() { 1,2,3 };
+            base._fredisManager.CreateListKey<int>(key, list);
+            var result = base._fredisManager.GetListValue<int>(key);
+            Assert.Equal(list, result);
+        }
+
+        [Fact]
+        public void Create_Get_List_Key_Double()
+        {
+            var list = new List<double>() { 1.1, 2.2, 3.3 };
+            base._fredisManager.CreateListKey<double>(key, list);
+            var result = base._fredisManager.GetListValue<double>(key);
+            Assert.Equal(list, result);
+        }
+
+        [Fact]
+        public void Create_Get_List_Key_Decimal()
+        {
+            var list = new List<decimal>() { 1.1M, 2.2M, 3.3M };
+            base._fredisManager.CreateListKey<decimal>(key, list);
+            var result = base._fredisManager.GetListValue<decimal>(key);
+            Assert.Equal(list, result);
         }
     }
 }

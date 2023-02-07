@@ -175,6 +175,19 @@ namespace Fredis
             return l;
         }
 
+        public List<T> GetListValue<T>(string key)
+        {
+            var l = new List<T>();
+            var count = Database.ListLength(key);
+            for (var i = count - 1; i >= 0; i--)
+            {
+                var v = Database.ListGetByIndex(key, i);
+                T  t = (T)Convert.ChangeType(v, typeof(T));
+                l.Add(t);
+            }
+            return l;
+        }
+
         private DateTime? GetDateTimeValue(string key)
         {
             var s = GetValue(key, null as string);
@@ -283,18 +296,7 @@ namespace Fredis
             }
         }
 
-        public bool CreateListKey(string key, List<string> val, int ttlInMinutes = 60)
-        {
-            this.DeleteKeyIfExits(key);
-
-            foreach (var item in val)
-                this.Database.ListLeftPush(key, item);
-
-            var r0 = this.Database.KeyExpire(key, DateTime.Now.AddMinutes(ttlInMinutes));
-
-            return r0;
-        }
-
+        
         public List<string> GetListKey(string key)
         {
             var l = new List<string>();
@@ -307,19 +309,72 @@ namespace Fredis
             return l;
         }
 
-        public bool CreateKey(string key, string val, int ttlInMinutes = 60)
+        public bool CreateKey<T>(string key, T val, int ttlInMinutes = 60)
         {
             var r0 = false;
             this.DeleteKeyIfExits(key);
 
+            var valAsString = __getStringRepresentation(val);
+
             var ts = new TimeSpan(0, ttlInMinutes, 0);
             if (ttlInMinutes == 0)
-                r0 = this.Database.StringSet(key, val);
+                r0 = this.Database.StringSet(key, valAsString);
             else
-                r0 = this.Database.StringSet(key, val, ts);
+                r0 = this.Database.StringSet(key, valAsString, ts);
             return r0;
         }
 
+        private string __getStringRepresentation<T>(T val)
+        {
+            var valAsString = string.Empty; // DateTime are serialized the JSON way
+            if (val is DateTime)
+                valAsString = Serialize(val);
+            else
+                valAsString = val.ToString();
+            return valAsString;
+        }
+
+        public bool CreateListKey<T>(string key, List<T> val, int ttlInMinutes = 60)
+        {
+            this.DeleteKeyIfExits(key);
+
+            foreach (var item in val)
+            {
+                var valAsString = __getStringRepresentation(item);
+                this.Database.ListLeftPush(key, valAsString);
+            }
+
+            return SetTTL(key, ttlInMinutes);
+        }
+
+        private bool SetTTL(string key, int ttlInMinutes)
+        {
+            return this.Database.KeyExpire(key, DateTime.Now.AddMinutes(ttlInMinutes));
+        }
+
+        public bool CreateListKey(string key, List<string> val, int ttlInMinutes = 60)
+        {
+            this.DeleteKeyIfExits(key);
+
+            foreach (var item in val)
+                this.Database.ListLeftPush(key, item);
+
+            return SetTTL(key, ttlInMinutes);
+        }
+
+
+        //public bool CreateKey(string key, string val, int ttlInMinutes = 60)
+        //{
+        //    var r0 = false;
+        //    this.DeleteKeyIfExits(key);
+
+        //    var ts = new TimeSpan(0, ttlInMinutes, 0);
+        //    if (ttlInMinutes == 0)
+        //        r0 = this.Database.StringSet(key, val);
+        //    else
+        //        r0 = this.Database.StringSet(key, val, ts);
+        //    return r0;
+        //}
 
         private string Serialize(object o)
         {
@@ -331,22 +386,9 @@ namespace Fredis
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public bool CreateKey(string key, DateTime val, int ttlInMinutes = 60) 
-        { 
-            return CreateKey(key, Serialize(val), ttlInMinutes);
-        }
-
         // https://github.com/StackExchange/StackExchange.Redis/blob/main/src/StackExchange.Redis/RedisValue.csC
         // https://stackoverflow.com/questions/32274113/difference-between-storing-integers-and-strings-in-redis
-        public bool CreateKey(string key, System.Int16 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, System.UInt16 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, System.Int64 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, System.UInt64 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, System.Int32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, System.UInt32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, double val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-        public bool CreateKey(string key, decimal val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
-
+      
         public FredisQueryResult GetReceivedMessage()
         {
             var rr = new FredisQueryResult();
