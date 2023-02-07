@@ -39,7 +39,7 @@ namespace Fredis
         public int RowCount;
     }
 
-    public class FredisManager
+    public class FredisManager 
     {
         internal ConnectionMultiplexer _redisConnection;
         private ConfigurationOptions _connectionOptions;
@@ -104,11 +104,11 @@ namespace Fredis
             return redisItem;
         }
 
-        private bool IsInteger(string k)
-        {
-            int i;
-            return int.TryParse(k, out i);
-        }
+        //private bool IsInteger(string k)
+        //{
+        //    int i;
+        //    return int.TryParse(k, out i);
+        //}
 
         public void Close()
         {
@@ -152,30 +152,15 @@ namespace Fredis
             return d;
         }
 
-        public Dictionary<string, string> GetDictionaryValue(string key)
+        public T GetDictionaryItem<T>(string key, string id)
         {
-            var d = new Dictionary<string, string>();
-            var hashEntries = Database.HashGetAll(key).ToList();
-
-            foreach (var e in hashEntries)
-                d.Add(e.Name, e.Value);
-
-            return d;
+            var l = new Dictionary<string, T>();
+            var v = Database.HashGet(key, id);
+            T t = (T)Convert.ChangeType(v, typeof(T));
+            return t;
         }
 
-        public List<string> GetListValue(string key)
-        {
-            var l = new List<string>();
-            var count = Database.ListLength(key);
-            for (var i = count - 1; i >= 0; i--)
-            {
-                var item = Database.ListGetByIndex(key, i);
-                l.Add(item);
-            }
-            return l;
-        }
-
-        public Dictionary<string, T> GetDictionaryValue<T>(string key)
+        public Dictionary<string, T> GetDictionary<T>(string key)
         {
             var l = new Dictionary<string, T>();
             var hashEntries = Database.HashGetAll(key).ToList();
@@ -185,18 +170,18 @@ namespace Fredis
                 T t = (T)Convert.ChangeType(e.Value, typeof(T));
                 l.Add(e.Name, t);
             }
-            
+
             return l;
         }
 
-        public List<T> GetListValue<T>(string key)
+        public List<T> GetList<T>(string key)
         {
             var l = new List<T>();
             var count = Database.ListLength(key);
             for (var i = count - 1; i >= 0; i--)
             {
                 var v = Database.ListGetByIndex(key, i);
-                T  t = (T)Convert.ChangeType(v, typeof(T));
+                T t = (T)Convert.ChangeType(v, typeof(T));
                 l.Add(t);
             }
             return l;
@@ -215,7 +200,7 @@ namespace Fredis
             if (defaultValue is DateTime)
             {
                 var v = GetDateTimeValue(key);
-                if(v == null)
+                if (v == null)
                 {
                     return (T)Convert.ChangeType(defaultValue, typeof(T));
                 }
@@ -231,22 +216,6 @@ namespace Fredis
             return (T)Convert.ChangeType(s, typeof(T));
         }
 
-        public double GetValue(string key, double defaultValue)
-        {
-            var s = GetValue(key, null as string);
-            if (s == null)
-                return defaultValue;
-            return long.Parse(s);
-        }
-
-        public string GetValue(string key, string defaultValue = null)
-        {
-            RedisValue rdv = Database.StringGet(key);
-            if (rdv.IsNull)
-                return defaultValue;
-
-            return rdv.ToString();
-        }
 
         public RedisValueEx GetValueAsTextEx(string key, RedisType redisType)
         {
@@ -309,7 +278,7 @@ namespace Fredis
                 return new RedisValueEx { Text = $"{ex.GetType().Name}:{ex.Message}", Error = true };
             }
         }
-        
+
         public List<string> GetListKey(string key)
         {
             var l = new List<string>();
@@ -322,7 +291,7 @@ namespace Fredis
             return l;
         }
 
-        public bool CreateKey<T>(string key, T val, int ttlInMinutes = 60)
+        public bool SetKey<T>(string key, T val, int ttlInMinutes = 60)
         {
             var r0 = false;
             this.DeleteKeyIfExits(key);
@@ -347,7 +316,7 @@ namespace Fredis
             return valAsString;
         }
 
-        public bool CreateDictionaryKey<T>(string key, Dictionary<string, T> val, int ttlInMinutes = 60)
+        public bool SetDictionary<T>(string key, Dictionary<string, T> val, int ttlInMinutes = 60)
         {
             this.DeleteKeyIfExits(key);
             var hashEntries = new List<HashEntry>();
@@ -361,7 +330,14 @@ namespace Fredis
             return this.SetTTL(key, ttlInMinutes);
         }
 
-        public bool CreateListKey<T>(string key, List<T> val, int ttlInMinutes = 60)
+        public bool SetDictionaryItemKey<T>(string key, string id, T val)
+        {
+            var valAsString = __getStringRepresentation(val);
+            this.Database.HashSet(key, id, valAsString);
+            return true;
+        }
+
+        public bool SetListKey<T>(string key, List<T> val, int ttlInMinutes = 60)
         {
             this.DeleteKeyIfExits(key);
 
@@ -390,19 +366,6 @@ namespace Fredis
         }
 
 
-        //public bool CreateKey(string key, string val, int ttlInMinutes = 60)
-        //{
-        //    var r0 = false;
-        //    this.DeleteKeyIfExits(key);
-
-        //    var ts = new TimeSpan(0, ttlInMinutes, 0);
-        //    if (ttlInMinutes == 0)
-        //        r0 = this.Database.StringSet(key, val);
-        //    else
-        //        r0 = this.Database.StringSet(key, val, ts);
-        //    return r0;
-        //}
-
         private string Serialize(object o)
         {
             return JsonConvert.SerializeObject(o);
@@ -415,7 +378,7 @@ namespace Fredis
 
         // https://github.com/StackExchange/StackExchange.Redis/blob/main/src/StackExchange.Redis/RedisValue.csC
         // https://stackoverflow.com/questions/32274113/difference-between-storing-integers-and-strings-in-redis
-      
+
         public FredisQueryResult GetReceivedMessage()
         {
             var rr = new FredisQueryResult();

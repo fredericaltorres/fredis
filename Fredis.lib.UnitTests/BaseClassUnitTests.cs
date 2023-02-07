@@ -7,25 +7,25 @@
         public bool ssl = true;
         public int timeOut = 10;
 
-        protected FredisManager _fredisManager = null;
+        protected FredisManager _fRedis = null;
 
         protected BaseClassUnitTests()
         {
-            _fredisManager = new FredisManager(url, password, ssl, timeOut);
+            _fRedis = new FredisManager(url, password, ssl, timeOut);
         }
 
         protected string DeleteKeyAndCheck(string key)
         {
             string result;
-            _fredisManager.DeleteKey(key);
-            result = _fredisManager.GetValue(key);
+            _fRedis.DeleteKey(key);
+            result = _fRedis.GetValue<string>(key);
             Assert.Equal(null, result);
             return result;
         }
 
         public void Dispose()
         {
-            _fredisManager.Close();
+            _fRedis.Close();
         }
     }
 }
