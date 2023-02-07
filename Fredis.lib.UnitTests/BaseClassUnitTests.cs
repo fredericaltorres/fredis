@@ -18,7 +18,7 @@
         {
             string result;
             _fRedis.DeleteKey(key);
-            result = _fRedis.GetValue<string>(key);
+            result = _fRedis.Get<string>(key);
             Assert.Equal(null, result);
             return result;
         }

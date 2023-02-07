@@ -8,12 +8,10 @@ namespace Fredis.lib.UnitTests
         {
         }
 
-
         [Fact]
         public void KeyExists()
         {
             DeleteKeyAndCheck(_mainTestKey);
-
             var val = "Hello";
             var result = base._fRedis.KeyExists(_mainTestKey);
             Assert.False(result);
@@ -29,7 +27,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = "Hello";
             base._fRedis.SetKey(_mainTestKey, val, 1);
-            var result = base._fRedis.GetValue<string>(_mainTestKey);
+            var result = base._fRedis.Get<string>(_mainTestKey);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(_mainTestKey);
         }
@@ -39,7 +37,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = 123.456;
             base._fRedis.SetKey(_mainTestKey, val, 1);
-            var result = base._fRedis.GetValue<double>(_mainTestKey, 0.0);
+            var result = base._fRedis.Get<double>(_mainTestKey, 0.0);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(_mainTestKey);
         }
@@ -49,7 +47,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = 123;
             base._fRedis.SetKey(_mainTestKey, val, 1);
-            var result = base._fRedis.GetValue<int>(_mainTestKey, 0);
+            var result = base._fRedis.Get<int>(_mainTestKey, 0);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(_mainTestKey);
         }
@@ -59,7 +57,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = DateTime.Now;
             base._fRedis.SetKey(_mainTestKey, val, 1);
-            var result = base._fRedis.GetValue<DateTime>(_mainTestKey, DateTime.Now);
+            var result = base._fRedis.Get<DateTime>(_mainTestKey, DateTime.Now);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(_mainTestKey);
         }
@@ -69,7 +67,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = new DateTime(1964, 12, 1);
             DeleteKeyAndCheck(_mainTestKey);
-            var result = base._fRedis.GetValue<DateTime>(_mainTestKey, val);
+            var result = base._fRedis.Get<DateTime>(_mainTestKey, val);
             Assert.Equal(val, result);
         }
 
@@ -77,7 +75,7 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_List_Key_String()
         {
             var list = new List<string>() { "A", "B", "C" };
-            base._fRedis.SetListKey<string>(_mainTestKey, list);
+            base._fRedis.SetList<string>(_mainTestKey, list);
             var result = base._fRedis.GetList<string>(_mainTestKey);
             Assert.Equal(list, result);
         }
@@ -86,7 +84,7 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_List_Key_Int()
         {
             var list = new List<int>() { 1, 2, 3 };
-            base._fRedis.SetListKey<int>(_mainTestKey, list);
+            base._fRedis.SetList<int>(_mainTestKey, list);
             var result = base._fRedis.GetList<int>(_mainTestKey);
             Assert.Equal(list, result);
         }
@@ -95,7 +93,7 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_List_Key_Double()
         {
             var list = new List<double>() { 1.1, 2.2, 3.3 };
-            base._fRedis.SetListKey<double>(_mainTestKey, list);
+            base._fRedis.SetList<double>(_mainTestKey, list);
             var result = base._fRedis.GetList<double>(_mainTestKey);
             Assert.Equal(list, result);
         }
@@ -104,7 +102,7 @@ namespace Fredis.lib.UnitTests
         public void Create_Get_List_Key_Decimal()
         {
             var list = new List<decimal>() { 1.1M, 2.2M, 3.3M };
-            base._fRedis.SetListKey<decimal>(_mainTestKey, list);
+            base._fRedis.SetList<decimal>(_mainTestKey, list);
             var result = base._fRedis.GetList<decimal>(_mainTestKey);
             Assert.Equal(list, result);
         }

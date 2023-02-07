@@ -189,13 +189,13 @@ namespace Fredis
 
         private DateTime? GetDateTimeValue(string key)
         {
-            var s = GetValue(key, null as string);
+            var s = Get(key, null as string);
             if (s == null)
                 return null;
             return Deserialize<DateTime>(s);
         }
 
-        public T GetValue<T>(string key, T defaultValue = default(T))
+        public T Get<T>(string key, T defaultValue = default(T))
         {
             if (defaultValue is DateTime)
             {
@@ -210,9 +210,10 @@ namespace Fredis
                 }
             }
 
-            var s = GetValue(key, null as string);
-            if (s == null)
+            var s = this.Database.StringGet(key);
+            if (!s.HasValue)
                 return defaultValue;
+
             return (T)Convert.ChangeType(s, typeof(T));
         }
 
@@ -337,7 +338,7 @@ namespace Fredis
             return true;
         }
 
-        public bool SetListKey<T>(string key, List<T> val, int ttlInMinutes = 60)
+        public bool SetList<T>(string key, List<T> val, int ttlInMinutes = 60)
         {
             this.DeleteKeyIfExits(key);
 
