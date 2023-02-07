@@ -175,6 +175,20 @@ namespace Fredis
             return l;
         }
 
+        public Dictionary<string, T> GetDictionaryValue<T>(string key)
+        {
+            var l = new Dictionary<string, T>();
+            var hashEntries = Database.HashGetAll(key).ToList();
+
+            foreach (var e in hashEntries)
+            {
+                T t = (T)Convert.ChangeType(e.Value, typeof(T));
+                l.Add(e.Name, t);
+            }
+            
+            return l;
+        }
+
         public List<T> GetListValue<T>(string key)
         {
             var l = new List<T>();
@@ -295,7 +309,6 @@ namespace Fredis
                 return new RedisValueEx { Text = $"{ex.GetType().Name}:{ex.Message}", Error = true };
             }
         }
-
         
         public List<string> GetListKey(string key)
         {
@@ -334,6 +347,20 @@ namespace Fredis
             return valAsString;
         }
 
+        public bool CreateDictionaryKey<T>(string key, Dictionary<string, T> val, int ttlInMinutes = 60)
+        {
+            this.DeleteKeyIfExits(key);
+            var hashEntries = new List<HashEntry>();
+
+            foreach (var e in val)
+            {
+                var valAsString = __getStringRepresentation(e.Value);
+                hashEntries.Add(new HashEntry(e.Key, valAsString));
+            }
+            this.Database.HashSet(key, hashEntries.ToArray());
+            return this.SetTTL(key, ttlInMinutes);
+        }
+
         public bool CreateListKey<T>(string key, List<T> val, int ttlInMinutes = 60)
         {
             this.DeleteKeyIfExits(key);
@@ -344,10 +371,10 @@ namespace Fredis
                 this.Database.ListLeftPush(key, valAsString);
             }
 
-            return SetTTL(key, ttlInMinutes);
+            return this.SetTTL(key, ttlInMinutes);
         }
 
-        private bool SetTTL(string key, int ttlInMinutes)
+        public bool SetTTL(string key, int ttlInMinutes)
         {
             return this.Database.KeyExpire(key, DateTime.Now.AddMinutes(ttlInMinutes));
         }
@@ -400,10 +427,14 @@ namespace Fredis
 
             return rr;
         }
+        public bool KeyExists(string key)
+        {
+            return this.Database.KeyExists(key);
+        }
 
         private void DeleteKeyIfExits(string key)
         {
-            if (this.Database.KeyExists(key))
+            if (this.KeyExists(key))
             {
                 this.DeleteKey(key);
             }
