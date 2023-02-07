@@ -12,7 +12,17 @@ namespace Fredis.lib.UnitTests
         {
             var val = "Hello";
             base._fredisManager.CreateKey(key, val, 1);
-            var result = base._fredisManager.GetValue(key);
+            var result = base._fredisManager.GetValue<string>(key);
+            Assert.Equal(val, result);
+            DeleteKeyAndCheck(key);
+        }
+
+        [Fact]
+        public void Create_Get_Delete_Double_Key()
+        {
+            var val = 123.456;
+            base._fredisManager.CreateKey(key, val, 1);
+            var result = base._fredisManager.GetValue<double>(key, 0.0);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(key);
         }
@@ -22,7 +32,7 @@ namespace Fredis.lib.UnitTests
         {
             var val = 123;
             base._fredisManager.CreateKey(key, val, 1);
-            var result = base._fredisManager.GetValue(key, 0);
+            var result = base._fredisManager.GetValue<int>(key, 0);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(key);
         }
@@ -32,11 +42,20 @@ namespace Fredis.lib.UnitTests
         {
             var val = DateTime.Now;
             base._fredisManager.CreateKey(key, val, 1);
-            var result = base._fredisManager.GetValue(key, DateTime.Now);
+            var result = base._fredisManager.GetValue<DateTime>(key, DateTime.Now);
             Assert.Equal(val, result);
             DeleteKeyAndCheck(key);
+            
         }
 
+        [Fact]
+        public void Create_GetWithDefaultValue_Delete_DateTime_Key()
+        {
+            var val = new DateTime(1964,12,1);
+            DeleteKeyAndCheck(key);
+            var result = base._fredisManager.GetValue<DateTime>(key, val);
+            Assert.Equal(val, result);
+        }
 
         [Fact]
         public void Create_Get_List_Key()

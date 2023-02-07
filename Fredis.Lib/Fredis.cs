@@ -172,18 +172,39 @@ namespace Fredis
                 var item = Database.ListGetByIndex(key, i);
                 l.Add(item);
             }
-
             return l;
         }
 
-        public DateTime GetValue(string key, DateTime defaultValue)
+        private DateTime? GetDateTimeValue(string key)
         {
             var s = GetValue(key, null as string);
             if (s == null)
-                return defaultValue;
+                return null;
             return Deserialize<DateTime>(s);
         }
-        public long GetValue(string key, long defaultValue)
+
+        public T GetValue<T>(string key, T defaultValue = default(T))
+        {
+            if (defaultValue is DateTime)
+            {
+                var v = GetDateTimeValue(key);
+                if(v == null)
+                {
+                    return (T)Convert.ChangeType(defaultValue, typeof(T));
+                }
+                else
+                {
+                    return (T)Convert.ChangeType(v, typeof(T));
+                }
+            }
+
+            var s = GetValue(key, null as string);
+            if (s == null)
+                return defaultValue;
+            return (T)Convert.ChangeType(s, typeof(T));
+        }
+
+        public double GetValue(string key, double defaultValue)
         {
             var s = GetValue(key, null as string);
             if (s == null)
@@ -323,6 +344,8 @@ namespace Fredis
         public bool CreateKey(string key, System.UInt64 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
         public bool CreateKey(string key, System.Int32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
         public bool CreateKey(string key, System.UInt32 val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, double val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
+        public bool CreateKey(string key, decimal val, int ttlInMinutes = 60) { return CreateKey(key, val.ToString(), ttlInMinutes); }
 
         public FredisQueryResult GetReceivedMessage()
         {
