@@ -12,15 +12,21 @@ namespace Fredis
     // http://tostring.it/2015/04/23/An-easy-way-to-use-StackExchange-Redis-copy/
     // https://redis.io/commands/type/
 
-    public class FredisItem
+    public class fRedisItem
     {
         public string Key { get; set; }
-        public string TextValue { get; set; }
-        public string Type { get; set; }
-        public string TTL { get; set; }
-        public long Length { get; set; }
+        
+        public RedisType Type { get; set; }
+        public TimeSpan? TTL { get; set; }
 
-        public RedisValue Value { get; set; }
+
+        public string TTLToString()
+        {
+            var ttlString = "--.--:--:--";
+            if (TTL.HasValue)
+                ttlString = TTL.Value.ToString(@"dd\.hh\:mm\:ss");
+            return ttlString;
+        }
     }
 
     public class FredisReceivedMessage
@@ -77,7 +83,7 @@ namespace Fredis
             }
         }
 
-        private List<string> GetAllSortedKeys(string pattern)
+        public List<string> GetAllSortedKeys(string pattern)
         {
             var srv = this.Server;
             var keys = srv.Keys(pattern: pattern).Select(s => s.ToString()).ToList();
@@ -85,21 +91,22 @@ namespace Fredis
             return keys;
         }
 
-        public List<FredisItem> GetKeys(string pattern)
+        public List<fRedisItem> GetKeys(string pattern, bool addTextRepresentation = false)
         {
             var keys = this.GetAllSortedKeys(pattern);
-            var redisItem = new List<FredisItem>();
+            var redisItem = new List<fRedisItem>();
             foreach (var key in keys)
             {
-                var keyType = this.Database.KeyType(key);
+                RedisType keyType = this.Database.KeyType(key);
                 TimeSpan? ttl = this.Database.KeyTimeToLive(key);
-                var ttlString = "--.--:--:--";
-                if (ttl.HasValue)
-                    ttlString = ttl.Value.ToString(@"dd\.hh\:mm\:ss");
-
-                var valueEx = this.GetValueAsTextEx(key, keyType);
-
-                redisItem.Add(new FredisItem { Key = key, TextValue = valueEx.Text, TTL = ttlString, Type = keyType.ToString(), Length = valueEx.Length });
+                RedisValue rv = RedisValue.EmptyString;
+                
+                redisItem.Add(new fRedisItem
+                {
+                    Key = key,
+                    TTL = ttl,
+                    Type = keyType,
+                });
             }
             return redisItem;
         }

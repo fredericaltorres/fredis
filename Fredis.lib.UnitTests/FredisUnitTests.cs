@@ -149,5 +149,41 @@ namespace Fredis.lib.UnitTests
             result = base._fRedis.GetDictionaryItem<string>(_mainTestKey, "B");
             Assert.Equal(newValue, result);
         }
+
+
+        [Fact]
+        public void GetKeys()
+        {
+            const string multiTestKeyPrefix = "mut_Key_";
+            for(var x=0; x<10; x++)
+            {
+                var key = $"{multiTestKeyPrefix}{x}";
+                DeleteKeyAndCheck(key);
+                base._fRedis.SetKey(key, x);
+            }
+
+            var result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
+            Assert.Equal(10, result.Count);
+            var sb = new System.Text.StringBuilder(512);
+            
+            foreach(var i in result)
+            {
+                switch(i.Type)
+                {
+                    case StackExchange.Redis.RedisType.String:
+                        sb.Append(base._fRedis.Get<string>(i.Key)).Append(", ");
+                        break;
+                }
+            }
+
+            var expected = "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ";
+            Assert.Equal(expected, sb.ToString());
+
+            for (var x = 0; x < 10; x++)
+            {
+                var key = $"{multiTestKeyPrefix}{x}";
+                DeleteKeyAndCheck(key);
+            }
+        }
     }
 }
