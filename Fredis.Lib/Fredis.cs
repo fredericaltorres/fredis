@@ -39,9 +39,7 @@ namespace Fredis
     public class FredisQueryResult
     {
         public string Text;
-        public bool Succeeded;
         public long DurationInMilliSeconds;
-        public string Error;
         public int RowCount;
     }
 
@@ -128,6 +126,24 @@ namespace Fredis
             public string Text;
             public long Length;
             public bool Error;
+        }
+
+        public bool DeleteKeys(List<fRedisItem> entries)
+        {
+            foreach (var e in entries)
+                if (!DeleteKey(e.Key))
+                    return false;
+
+            return true;
+        }
+
+        public bool DeleteKeys(List<string> keys)
+        {
+            foreach (var key in keys)
+                if(!DeleteKey(key))
+                    return false;
+
+            return true;
         }
 
         public bool DeleteKey(string key)

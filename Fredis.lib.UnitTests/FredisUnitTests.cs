@@ -1,8 +1,11 @@
+using DynamicSugar;
+
 namespace Fredis.lib.UnitTests
 {
     public class FredisUnitTests : BaseClassUnitTests
     {
         const string _mainTestKey = "ut_Key01";
+        const string multiTestKeyPrefix = "mut_Key_";
 
         public FredisUnitTests() : base()
         {
@@ -150,25 +153,21 @@ namespace Fredis.lib.UnitTests
             Assert.Equal(newValue, result);
         }
 
-
         [Fact]
         public void GetKeys()
         {
-            const string multiTestKeyPrefix = "mut_Key_";
-            for(var x=0; x<10; x++)
-            {
-                var key = $"{multiTestKeyPrefix}{x}";
-                DeleteKeyAndCheck(key);
-                base._fRedis.SetKey(key, x);
-            }
+            // var r = base._fRedis.DeleteKeys(base._fRedis.GetKeys($"{multiTestKeyPrefix}*"));
+
+            var dataList = DS.Range(1, 10 + 1, 1);
+            CreateIntegerSetOfKeys(dataList);
 
             var result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
             Assert.Equal(10, result.Count);
             var sb = new System.Text.StringBuilder(512);
-            
-            foreach(var i in result)
+
+            foreach (var i in result)
             {
-                switch(i.Type)
+                switch (i.Type)
                 {
                     case StackExchange.Redis.RedisType.String:
                         sb.Append(base._fRedis.Get<string>(i.Key)).Append(", ");
@@ -176,14 +175,60 @@ namespace Fredis.lib.UnitTests
                 }
             }
 
-            var expected = "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ";
-            Assert.Equal(expected, sb.ToString());
 
-            for (var x = 0; x < 10; x++)
+            var expected = string.Join(", ", dataList);
+            Assert.Equal(expected, sb.ToString().RemoveLastChar().RemoveLastChar());
+
+            dataList.ForEach(intVal =>
             {
-                var key = $"{multiTestKeyPrefix}{x}";
+                var key = $"{multiTestKeyPrefix}{intVal:000}";
                 DeleteKeyAndCheck(key);
-            }
+            });
+        }
+
+        private void CreateIntegerSetOfKeys(List<int> dataList)
+        {
+            dataList.ForEach(intVal =>
+            {
+                var key = $"{multiTestKeyPrefix}{intVal:000}";
+                DeleteKeyAndCheck(key);
+                base._fRedis.SetKey(key, intVal);
+            });
+        }
+
+        [Fact]
+        public void DeleteKeys_FromQuery()
+        {
+            // var r = base._fRedis.DeleteKeys(base._fRedis.GetKeys($"{multiTestKeyPrefix}*"));
+
+            var dataList = DS.Range(1, 10 + 1, 1);
+            CreateIntegerSetOfKeys(dataList);
+
+            var result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
+            Assert.Equal(10, result.Count);
+
+            base._fRedis.DeleteKeys(result);
+
+            result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
+            Assert.Equal(0, result.Count);
+        }
+
+
+        [Fact]
+        public void DeleteKeys_FromListOfLeys()
+        {
+            var dataList = DS.Range(1, 10 + 1, 1);
+            CreateIntegerSetOfKeys(dataList);
+
+            var result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
+            Assert.Equal(10, result.Count);
+
+            var keysToDelete = result.Select(i => i.Key).ToList();
+
+            base._fRedis.DeleteKeys(keysToDelete);
+
+            result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
+            Assert.Equal(0, result.Count);
         }
     }
 }
