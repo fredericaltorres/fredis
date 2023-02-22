@@ -81,24 +81,25 @@ namespace Fredis
             }
         }
 
-        public List<string> GetAllSortedKeys(string pattern)
+        public List<string> QueryKeys(string pattern, bool sort = true)
         {
             var srv = this.Server;
             var keys = srv.Keys(pattern: pattern).Select(s => s.ToString()).ToList();
-            keys.Sort();
+            if(sort)
+                keys.Sort();
             return keys;
         }
 
-        public List<fRedisItem> GetKeys(string pattern, bool addTextRepresentation = false)
+        public List<fRedisItem> GetKeys(string pattern, bool sort = true)
         {
-            var keys = this.GetAllSortedKeys(pattern);
+            var keys = this.QueryKeys(pattern, sort);
             var redisItem = new List<fRedisItem>();
             foreach (var key in keys)
             {
                 RedisType keyType = this.Database.KeyType(key);
                 TimeSpan? ttl = this.Database.KeyTimeToLive(key);
                 RedisValue rv = RedisValue.EmptyString;
-                
+
                 redisItem.Add(new fRedisItem
                 {
                     Key = key,
@@ -108,12 +109,6 @@ namespace Fredis
             }
             return redisItem;
         }
-
-        //private bool IsInteger(string k)
-        //{
-        //    int i;
-        //    return int.TryParse(k, out i);
-        //}
 
         public void Close()
         {
@@ -140,7 +135,7 @@ namespace Fredis
         public bool DeleteKeys(List<string> keys)
         {
             foreach (var key in keys)
-                if(!DeleteKey(key))
+                if (!DeleteKey(key))
                     return false;
 
             return true;
@@ -158,22 +153,7 @@ namespace Fredis
             }
             return false;
         }
-        public Dictionary<string, long> GetSortedSetValue(string key)
-        {
-            var d = new Dictionary<string, long>();
-            RedisValue[] sortedValues = Database.SortedSetRangeByRank(key);
-            long len = 0;
-            foreach (var s in sortedValues)
-            {
-                var score = Database.SortedSetScore(key, s);
-                if (score.HasValue)
-                    d.Add(s, long.Parse(score.Value.ToString()));
-                else
-                    d.Add(s, 0);
-            }
-
-            return d;
-        }
+    
 
         public T GetDictionaryItem<T>(string key, string id)
         {
@@ -187,12 +167,8 @@ namespace Fredis
         {
             var l = new Dictionary<string, T>();
             var hashEntries = Database.HashGetAll(key).ToList();
-
             foreach (var e in hashEntries)
-            {
-                T t = (T)Convert.ChangeType(e.Value, typeof(T));
-                l.Add(e.Name, t);
-            }
+                l.Add(e.Name, (T)Convert.ChangeType(e.Value, typeof(T)));
 
             return l;
         }
@@ -201,13 +177,45 @@ namespace Fredis
         {
             var l = new List<T>();
             var count = Database.ListLength(key);
-            for (var i = count - 1; i >= 0; i--)
+            for (var i = count-1; i >= 0; i--)
             {
                 var v = Database.ListGetByIndex(key, i);
                 T t = (T)Convert.ChangeType(v, typeof(T));
                 l.Add(t);
             }
             return l;
+        }
+
+        public void ListEnQueue<T>(string key, T t)
+        {
+            Database.ListLeftPush(key, t.ToString());
+        }
+
+        public T ListDeQueue<T>(string key)
+        {
+            RedisValue r = Database.ListRightPop(key);
+            T t = (T)Convert.ChangeType(r, typeof(T));
+            return t;
+        }
+
+        public void ListAdd<T>(string key, T t)
+        {
+            Database.ListLeftPush(key, t.ToString());
+        }
+
+        public void ListInsert<T>(string key, T t, int position, bool insertAfter = true)
+        {
+            if (insertAfter)
+                Database.ListInsertAfter(key, t.ToString(), position);
+            else
+                Database.ListInsertBefore(key, t.ToString(), position);
+        }
+
+        public T ListPop<T>(string key)
+        {
+            RedisValue r = Database.ListLeftPop(key);
+            T t = (T)Convert.ChangeType(r, typeof(T));
+            return t;
         }
 
         private DateTime? GetDateTimeValue(string key)
@@ -239,7 +247,6 @@ namespace Fredis
 
             return (T)Convert.ChangeType(s, typeof(T));
         }
-
 
         public RedisValueEx GetValueAsTextEx(string key, RedisType redisType)
         {
@@ -303,17 +310,17 @@ namespace Fredis
             }
         }
 
-        public List<string> GetListKey(string key)
-        {
-            var l = new List<string>();
-            var count = Database.ListLength(key);
-            for (var i = count - 1; i >= 0; i--)
-            {
-                var item = Database.ListGetByIndex(key, i);
-                l.Add(item);
-            }
-            return l;
-        }
+        //public List<string> GetListKey(string key)
+        //{
+        //    var l = new List<string>();
+        //    var count = Database.ListLength(key);
+        //    for (var i = count - 1; i >= 0; i--)
+        //    {
+        //        var item = Database.ListGetByIndex(key, i);
+        //        l.Add(item);
+        //    }
+        //    return l;
+        //}
 
         public bool SetKey<T>(string key, T val, int ttlInMinutes = 60)
         {
@@ -365,11 +372,12 @@ namespace Fredis
         {
             this.DeleteKeyIfExits(key);
 
+            var redisValueList = new List<RedisValue>();
+
             foreach (var item in val)
-            {
-                var valAsString = __getStringRepresentation(item);
-                this.Database.ListLeftPush(key, valAsString);
-            }
+                redisValueList.Add(__getStringRepresentation(item));
+
+            this.Database.ListLeftPush(key, redisValueList.ToArray());
 
             return this.SetTTL(key, ttlInMinutes);
         }
@@ -379,15 +387,15 @@ namespace Fredis
             return this.Database.KeyExpire(key, DateTime.Now.AddMinutes(ttlInMinutes));
         }
 
-        public bool CreateListKey(string key, List<string> val, int ttlInMinutes = 60)
-        {
-            this.DeleteKeyIfExits(key);
+        //public bool CreateListKey(string key, List<string> val, int ttlInMinutes = 60)
+        //{
+        //    this.DeleteKeyIfExits(key);
 
-            foreach (var item in val)
-                this.Database.ListLeftPush(key, item);
+        //    foreach (var item in val)
+        //        this.Database.ListLeftPush(key, item);
 
-            return SetTTL(key, ttlInMinutes);
-        }
+        //    return SetTTL(key, ttlInMinutes);
+        //}
 
 
         private string Serialize(object o)

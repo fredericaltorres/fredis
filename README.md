@@ -1,32 +1,41 @@
 # fredis
 .NET helper library for REDIS
 
-
-
-    public interface IFredisManager
+    public class IFredisManager
     {
-        IServer Server { get; }
+        // Initialization
+        FredisManager(string url, string password, bool ssl, int timeOut);
         void Close();
 
-        bool CreateDictionaryKey<T>(string key, Dictionary<string, T> val, int ttlInMinutes = 60);
-        bool CreateKey<T>(string key, T val, int ttlInMinutes = 60);
-        bool CreateListKey<T>(string key, List<T> val, int ttlInMinutes = 60);
+        // Redis object
+        IServer Server { get; }
+        IDatabase Database;
 
-        bool DeleteKey(string key);
-        bool KeyExists(string key);
+        // Set Key
+        bool SetKey<T>(string key, T val, int ttlInMinutes = 60);
+        
+        bool SetList<T>(string key, List<T> val, int ttlInMinutes = 60);
+
+        bool SetDictionary<T>(string key, Dictionary<string, T> val, int ttlInMinutes = 60);
+            bool SetDictionaryItemKey<T>(string key, string id, T val);
+
         bool SetTTL(string key, int ttlInMinutes);
-
-        Dictionary<string, T> GetDictionaryValue<T>(string key);
-        List<FredisItem> GetKeys(string pattern);
-
-        List<string> GetListKey(string key);
-        List<string> GetListValue(string key);
-        List<T> GetListValue<T>(string key);
-
+        bool KeyExists(string key);
         
-        string GetValue(string key, string defaultValue = null);
-        double GetValue(string key, double defaultValue);
-        T GetValue<T>(string key, T defaultValue = default);
+        bool DeleteKey(string key);
+        bool DeleteKeys(List<string> keys);
+        bool DeleteKeys(List<fRedisItem> entries);
 
-        
+        // Get Key
+        T Get<T>(string key, T defaultValue = default);
+        List<T> GetList<T>(string key);
+        Dictionary<string, T> GetDictionary<T>(string key);
+            T GetDictionaryItem<T>(string key, string id);
+                    
+        // Querying For Keys
+        List<string> QueryKeys(string pattern, bool sort = true);
+        List<fRedisItem> GetKeys(string pattern, bool sort = true);
+
+        FredisQueryResult GetReceivedMessage();
+        FredisManager.RedisValueEx GetValueAsTextEx(string key, RedisType redisType);
     }

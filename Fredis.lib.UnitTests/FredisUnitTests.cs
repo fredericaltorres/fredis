@@ -110,6 +110,72 @@ namespace Fredis.lib.UnitTests
             Assert.Equal(list, result);
         }
 
+
+        [Fact]
+        public void List_As_Queue_Push_Pop()
+        {
+            var list = new List<string>() { "A", "B", "C" };
+            base._fRedis.SetList<string>(_mainTestKey, list);
+            base._fRedis.ListAdd<string>(_mainTestKey, "D");
+
+            var expectedList = new List<string>() { "A", "B", "C", "D" };
+            var result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedList, result);
+
+            var poped = base._fRedis.ListPop<string>(_mainTestKey);
+            Assert.Equal("D", poped);
+
+            expectedList = new List<string>() { "A", "B", "C"};
+            result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedList, result);
+        }
+
+        [Fact]
+        public void List_As_Queue_Insert_Remove()
+        {
+            var list = new List<string>() { "A", "B", "C" };
+            base._fRedis.SetList<string>(_mainTestKey, list);
+
+            base._fRedis.ListInsert<string>(_mainTestKey, "AA", 1);
+
+            var expectedList = new List<string>() { "A", "AA", "B", "C"};
+            var result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedList, result);
+
+            var poped = base._fRedis.ListPop<string>(_mainTestKey);
+            Assert.Equal("D", poped);
+
+            expectedList = new List<string>() { "A", "B", "C" };
+            result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedList, result);
+        }
+
+
+        [Fact]
+        public void List_As_Queue_Enqueue_Dequeue()
+        {
+            var queue = new List<string>() { };
+            base._fRedis.SetList<string>(_mainTestKey, queue);
+            base._fRedis.ListEnQueue<string>(_mainTestKey, "A");
+            base._fRedis.ListEnQueue<string>(_mainTestKey, "B");
+            base._fRedis.ListEnQueue<string>(_mainTestKey, "C");
+            base._fRedis.ListEnQueue<string>(_mainTestKey, "D");
+
+            var expectedQueue = new List<string>() { "A", "B", "C", "D"};
+            var result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedQueue, result);
+
+            var poped = base._fRedis.ListDeQueue<string>(_mainTestKey);
+            Assert.Equal("A", poped);
+
+            poped = base._fRedis.ListDeQueue<string>(_mainTestKey);
+            Assert.Equal("B", poped);
+
+            expectedQueue = new List<string>() { "C", "D"};
+            result = base._fRedis.GetList<string>(_mainTestKey);
+            Assert.Equal(expectedQueue, result);
+        }
+
         [Fact]
         public void Create_Get_Dictionary_Key_Int()
         {
