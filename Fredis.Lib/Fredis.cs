@@ -203,12 +203,19 @@ namespace Fredis
             Database.ListLeftPush(key, t.ToString());
         }
 
+        // https://stackoverflow.com/questions/31955977/how-to-store-list-element-in-redis-cache
+        // https://github.com/thepirat000/CachingFramework.Redis
+
         public void ListInsert<T>(string key, T t, int position, bool insertAfter = true)
         {
-            if (insertAfter)
-                Database.ListInsertAfter(key, t.ToString(), position);
-            else
-                Database.ListInsertBefore(key, t.ToString(), position);
+            // Above implementation does not work
+            var l = this.GetList<T>(key); 
+            l.Insert(position, t);
+            this.SetList(key, l);
+            //if (insertAfter)
+            //    Database.ListInsertAfter(key, position, t.ToString());
+            //else
+            //    Database.ListInsertBefore(key, position, t.ToString());
         }
 
         public T ListPop<T>(string key)
@@ -216,6 +223,15 @@ namespace Fredis
             RedisValue r = Database.ListLeftPop(key);
             T t = (T)Convert.ChangeType(r, typeof(T));
             return t;
+        }
+
+        public T Remove<T>(string key, int position)
+        {
+            var l = this.GetList<T>(key);
+            T r = l[position];
+            l.RemoveAt(position);
+            this.SetList(key, l);
+            return r;
         }
 
         private DateTime? GetDateTimeValue(string key)

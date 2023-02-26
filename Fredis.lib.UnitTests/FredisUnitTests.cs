@@ -4,7 +4,7 @@ namespace Fredis.lib.UnitTests
 {
     public class FredisUnitTests : BaseClassUnitTests
     {
-        const string _mainTestKey = "ut_Key01";
+        const string _mainTestKey = "ut_Key001";
         const string multiTestKeyPrefix = "mut_Key_";
 
         public FredisUnitTests() : base()
@@ -142,10 +142,14 @@ namespace Fredis.lib.UnitTests
             var result = base._fRedis.GetList<string>(_mainTestKey);
             Assert.Equal(expectedList, result);
 
-            var poped = base._fRedis.ListPop<string>(_mainTestKey);
-            Assert.Equal("D", poped);
+            var removedItem = base._fRedis.Remove<string>(_mainTestKey, 0);
+            Assert.Equal("A", removedItem);
+            removedItem = base._fRedis.Remove<string>(_mainTestKey, 0);
+            Assert.Equal("AA", removedItem);
+            removedItem = base._fRedis.Remove<string>(_mainTestKey, 1);
+            Assert.Equal("C", removedItem);
 
-            expectedList = new List<string>() { "A", "B", "C" };
+            expectedList = new List<string>() { "B"};
             result = base._fRedis.GetList<string>(_mainTestKey);
             Assert.Equal(expectedList, result);
         }
