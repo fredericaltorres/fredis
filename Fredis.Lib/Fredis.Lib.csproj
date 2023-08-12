@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Fred REDIS .NET Helper</Title>
+    <Company>FREDERIC TORRES</Company>
+    <Description>Fred REDIS .NET Helper</Description>
+    <Copyright>FREDERIC TORRES</Copyright>
+    <PackageProjectUrl>https:://FredericTorres.com</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/fredericaltorres/fredis</RepositoryUrl>
+    <Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
