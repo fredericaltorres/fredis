@@ -1,6 +1,8 @@
 # fredis
 .NET helper library for REDIS
 
+![Logo ](Logo.1.50.png "Logo")
+
     public class IFredisManager
     {
         // Initialization
