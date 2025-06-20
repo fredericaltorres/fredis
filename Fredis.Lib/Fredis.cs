@@ -433,7 +433,12 @@ namespace Fredis
 
             if (_receivedMessages.Count > 0)
             {
-                rr.Text = "";// _receivedMessages;
+                var sb = new StringBuilder();
+                foreach (var e in _receivedMessages)
+                {
+                    sb.Append($"{e.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss")}, {e.Channel}, {e.Message}\r\n");
+                }
+                rr.Text = sb.ToString();
             }
 
             return rr;

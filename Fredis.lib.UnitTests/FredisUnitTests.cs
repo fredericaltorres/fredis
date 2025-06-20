@@ -279,6 +279,8 @@ namespace Fredis.lib.UnitTests
 
             base._fRedis.DeleteKeys(result);
 
+            Thread.Sleep(1000*2); // Ensure keys are not cached
+
             result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
             Assert.Equal(0, result.Count);
         }
@@ -296,6 +298,8 @@ namespace Fredis.lib.UnitTests
             var keysToDelete = result.Select(i => i.Key).ToList();
 
             base._fRedis.DeleteKeys(keysToDelete);
+
+            Thread.Sleep(1000*2); // Ensure keys are not cached
 
             result = base._fRedis.GetKeys($"{multiTestKeyPrefix}*");
             Assert.Equal(0, result.Count);
