@@ -12,6 +12,29 @@ namespace Fredis.lib.UnitTests
         }
 
         [Fact]
+        public void Search2()
+        {
+            var result = base._fRedis.GetKeys($"fms*");
+            Assert.True(result.Count > 0);
+            var sb = new System.Text.StringBuilder(512);
+
+            foreach (var i in result)
+            {
+                switch (i.Type)
+                {
+                    case StackExchange.Redis.RedisType.String:
+                        sb.Append(base._fRedis.Get<string>(i.Key)).Append(", ");
+                        break;
+                }
+            }
+        }
+        [Fact]
+        public void Search()
+        {
+            var result = base._fRedis.Get<string>("fms-presentation-1248185269204943305");
+        }
+
+        [Fact]
         public void KeyExists()
         {
             DeleteKeyAndCheck(_mainTestKey);
