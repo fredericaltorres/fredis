@@ -5,7 +5,7 @@
         public string url => Environment.GetEnvironmentVariable("fredis_url");
         public string password = Environment.GetEnvironmentVariable("fredis_password");
         public bool ssl = true;
-        public int timeOut = 10;
+        public int timeOut = 30;
 
         protected FredisManager _fRedis = null;
 

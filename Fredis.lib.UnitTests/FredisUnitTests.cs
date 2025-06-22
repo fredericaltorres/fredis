@@ -11,6 +11,32 @@ namespace Fredis.lib.UnitTests
         {
         }
 
+
+        [Fact]
+        public void SearchQAZ1()
+        {
+            _fRedis = new FredisManager("bskredisqa.redis.cache.windows.net:6380", "s1VeHEfu4XjZqHXryfa8C28ZizqVPCoCfNO0fHlTUzE=", true, 44);
+            //var result = base._fRedis.GetKeys($"1483562-8f7faee4-b406-4c5d-900d-dc61495d0e*");
+            var result = base._fRedis.GetKeys($"1487135*");
+            Assert.True(result.Count > 0);
+            var sb = new System.Text.StringBuilder(512);
+
+            foreach (var i in result)
+            {
+                switch (i.Type)
+                {
+                    case StackExchange.Redis.RedisType.String:
+                        sb.Append(i.Key.ToString()).Append(" = ").Append(base._fRedis.Get<string>(i.Key)).AppendLine();
+                        break;
+                    case StackExchange.Redis.RedisType.List:
+                        var listStr = base._fRedis.GetList<string>(i.Key);
+                        sb.Append(i.Key.ToString()).Append(" = ").Append(string.Join(",", listStr)).AppendLine();
+                        break;
+                }
+            }
+            var rr = sb.ToString();
+        }
+
         [Fact]
         public void Search2()
         {
@@ -23,10 +49,15 @@ namespace Fredis.lib.UnitTests
                 switch (i.Type)
                 {
                     case StackExchange.Redis.RedisType.String:
-                        sb.Append(base._fRedis.Get<string>(i.Key)).Append(", ");
+                        sb.Append(i.Key.ToString()).Append(" = ").Append(base._fRedis.Get<string>(i.Key)).AppendLine();
+                        break;
+                    case StackExchange.Redis.RedisType.List:
+                        var listStr = base._fRedis.GetList<string>(i.Key);
+                        sb.Append(i.Key.ToString()).Append(" = ").Append(string.Join(",", listStr)).AppendLine();
                         break;
                 }
             }
+            var rr = sb.ToString();
         }
         [Fact]
         public void Search()

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace Fredis
@@ -52,9 +53,14 @@ namespace Fredis
 
         public string ConnectionSummaryString;
         public IDatabase Database;
+        IServer Server;
+        const int MinimumTimeout = 60; // seconds
 
         public FredisManager(string url, string password, bool ssl, int timeOut)
         {
+            if(timeOut < MinimumTimeout)
+                timeOut = MinimumTimeout;
+
             _connectionOptions = new ConfigurationOptions
             {
                 EndPoints = { url },
@@ -69,22 +75,16 @@ namespace Fredis
             this.ConnectionSummaryString = $"url:{url}, ssl:{ssl}, timeout:{timeOut}";
 
             _redisConnection = ConnectionMultiplexer.Connect(_connectionOptions);
-            Database = _redisConnection.GetDatabase();
-        }
-
-        public IServer Server
-        {
-            get
-            {
-                var endpoint = _redisConnection.GetEndPoints().First();
-                return _redisConnection.GetServer(endpoint);
-            }
+            this.Database = _redisConnection.GetDatabase();
+            var endpoint = _redisConnection.GetEndPoints().First();
+            this.Server = _redisConnection.GetServer(endpoint);
         }
 
         public List<string> QueryKeys(string pattern, bool sort = true)
         {
             var srv = this.Server;
-            var keys = srv.Keys(pattern: pattern).Select(s => s.ToString()).ToList();
+            var result = srv.Keys(pattern: pattern).ToList();
+            var keys = result.Select(s => s.ToString()).ToList();
             if(sort)
                 keys.Sort();
             return keys;
