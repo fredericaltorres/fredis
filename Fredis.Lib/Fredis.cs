@@ -53,7 +53,7 @@ namespace Fredis
 
         public string ConnectionSummaryString;
         public IDatabase Database;
-        IServer Server;
+        public IServer Server;
         const int MinimumTimeout = 60; // seconds
 
         public FredisManager(string url, string password, bool ssl, int timeOut)
